@@ -1,5 +1,8 @@
 const puzzle = document.getElementById("puzzle");
 
+const photoInput = document.getElementById("photoInput");
+const photoName = document.getElementById("photoName");
+
 const timerElement = document.getElementById("timer");
 const movesElement = document.getElementById("moves");
 const scoreElement = document.getElementById("score");
@@ -16,18 +19,17 @@ const finalScore = document.getElementById("finalScore");
 const playAgainBtn = document.getElementById("playAgainBtn");
 
 
-// ========================================
-// KONFIGURASI
-// ========================================
+/* ========================================
+   KONFIGURASI
+======================================== */
 
 const GRID_SIZE = 3;
-
 const TOTAL_TILES = GRID_SIZE * GRID_SIZE;
 
 
-// ========================================
-// DATA GAME
-// ========================================
+/* ========================================
+   DATA GAME
+======================================== */
 
 let tiles = [];
 
@@ -41,12 +43,69 @@ let gameStarted = false;
 
 let draggedIndex = null;
 
+let selectedTile = null;
 
-// ========================================
-// MEMBUAT PUZZLE
-// ========================================
 
-function createPuzzle() {
+/*
+   Gambar yang digunakan puzzle.
+   Akan diisi dari foto galeri.
+*/
+let selectedImage = null;
+
+
+/* ========================================
+   PILIH FOTO
+======================================== */
+
+photoInput.addEventListener("change", function(event) {
+
+    const file = event.target.files[0];
+
+    if (!file) {
+        return;
+    }
+
+    if (!file.type.startsWith("image/")) {
+
+        alert("File yang dipilih harus berupa gambar.");
+
+        return;
+    }
+
+    photoName.textContent = file.name;
+
+    const reader = new FileReader();
+
+    reader.onload = function(e) {
+
+        selectedImage = e.target.result;
+
+        createNewPuzzle();
+
+    };
+
+    reader.readAsDataURL(file);
+
+});
+
+
+/* ========================================
+   BUAT PUZZLE BARU
+======================================== */
+
+function createNewPuzzle() {
+
+    stopTimer();
+
+    moves = 0;
+
+    seconds = 0;
+
+    gameStarted = false;
+
+    selectedTile = null;
+
+    winMessage.classList.remove("show");
 
     tiles = [];
 
@@ -56,14 +115,16 @@ function createPuzzle() {
 
     }
 
-    renderPuzzle();
+    shufflePuzzle();
+
+    updateInfo();
 
 }
 
 
-// ========================================
-// MENAMPILKAN PUZZLE
-// ========================================
+/* ========================================
+   RENDER PUZZLE
+======================================== */
 
 function renderPuzzle() {
 
@@ -77,9 +138,33 @@ function renderPuzzle() {
 
         tile.draggable = true;
 
-        const row = Math.floor(tileNumber / GRID_SIZE);
+        /*
+           Kalau belum memilih foto,
+           gunakan warna default.
+        */
 
-        const column = tileNumber % GRID_SIZE;
+        if (selectedImage) {
+
+            tile.style.backgroundImage =
+                `url("${selectedImage}")`;
+
+        }
+
+        /*
+           Posisi gambar.
+
+           0 = kiri atas
+           1 = tengah atas
+           2 = kanan atas
+           3 = kiri tengah
+           dst.
+        */
+
+        const row =
+            Math.floor(tileNumber / GRID_SIZE);
+
+        const column =
+            tileNumber % GRID_SIZE;
 
         tile.style.backgroundPosition =
             `${column * 50}% ${row * 50}%`;
@@ -89,7 +174,7 @@ function renderPuzzle() {
         tile.dataset.number = tileNumber;
 
 
-        // Drag Events
+        /* DRAG */
 
         tile.addEventListener(
             "dragstart",
@@ -112,7 +197,7 @@ function renderPuzzle() {
         );
 
 
-        // Touch / Mobile
+        /* KLIK */
 
         tile.addEventListener(
             "click",
@@ -127,9 +212,9 @@ function renderPuzzle() {
 }
 
 
-// ========================================
-// DRAG START
-// ========================================
+/* ========================================
+   DRAG START
+======================================== */
 
 function handleDragStart(event) {
 
@@ -141,9 +226,9 @@ function handleDragStart(event) {
 }
 
 
-// ========================================
-// DRAG OVER
-// ========================================
+/* ========================================
+   DRAG OVER
+======================================== */
 
 function handleDragOver(event) {
 
@@ -152,9 +237,9 @@ function handleDragOver(event) {
 }
 
 
-// ========================================
-// DROP
-// ========================================
+/* ========================================
+   DROP
+======================================== */
 
 function handleDrop(event) {
 
@@ -167,7 +252,9 @@ function handleDrop(event) {
         draggedIndex === null ||
         draggedIndex === targetIndex
     ) {
+
         return;
+
     }
 
     swapTiles(
@@ -180,9 +267,9 @@ function handleDrop(event) {
 }
 
 
-// ========================================
-// DRAG END
-// ========================================
+/* ========================================
+   DRAG END
+======================================== */
 
 function handleDragEnd(event) {
 
@@ -193,9 +280,57 @@ function handleDragEnd(event) {
 }
 
 
-// ========================================
-// SWAP TILE
-// ========================================
+/* ========================================
+   KLIK DUA TILE
+======================================== */
+
+function handleTileClick(event) {
+
+    const position =
+        Number(
+            event.currentTarget.dataset.position
+        );
+
+
+    if (selectedTile === null) {
+
+        selectedTile = position;
+
+        event.currentTarget.classList.add(
+            "selected"
+        );
+
+        return;
+
+    }
+
+
+    if (selectedTile === position) {
+
+        selectedTile = null;
+
+        event.currentTarget.classList.remove(
+            "selected"
+        );
+
+        return;
+
+    }
+
+
+    swapTiles(
+        selectedTile,
+        position
+    );
+
+    selectedTile = null;
+
+}
+
+
+/* ========================================
+   TUKAR TILE
+======================================== */
 
 function swapTiles(index1, index2) {
 
@@ -218,70 +353,15 @@ function swapTiles(index1, index2) {
 }
 
 
-// ========================================
-// KLIK TILE
-// ========================================
-
-let selectedTile = null;
-
-function handleTileClick(event) {
-
-    const position =
-        Number(event.currentTarget.dataset.position);
-
-
-    if (selectedTile === null) {
-
-        selectedTile = position;
-
-        event.currentTarget.classList.add(
-            "selected"
-        );
-
-        return;
-    }
-
-
-    if (selectedTile === position) {
-
-        selectedTile = null;
-
-        event.currentTarget.classList.remove(
-            "selected"
-        );
-
-        return;
-    }
-
-
-    swapTiles(
-        selectedTile,
-        position
-    );
-
-    selectedTile = null;
-
-}
-
-
-// ========================================
-// ACAK PUZZLE
-// ========================================
+/* ========================================
+   ACAK PUZZLE
+======================================== */
 
 function shufflePuzzle() {
 
-    stopTimer();
-
-    moves = 0;
-
-    seconds = 0;
-
-    gameStarted = false;
-
-    selectedTile = null;
-
-
-    // Fisher-Yates Shuffle
+    /*
+       Fisher-Yates Shuffle
+    */
 
     for (
         let i = tiles.length - 1;
@@ -305,7 +385,9 @@ function shufflePuzzle() {
     }
 
 
-    // Pastikan tidak langsung selesai
+    /*
+       Jangan sampai puzzle langsung selesai
+    */
 
     if (isSolved()) {
 
@@ -315,17 +397,14 @@ function shufflePuzzle() {
 
     }
 
-
-    updateInfo();
-
     renderPuzzle();
 
 }
 
 
-// ========================================
-// CEK SELESAI
-// ========================================
+/* ========================================
+   CEK PUZZLE SELESAI
+======================================== */
 
 function isSolved() {
 
@@ -348,6 +427,10 @@ function isSolved() {
 }
 
 
+/* ========================================
+   CEK MENANG
+======================================== */
+
 function checkWin() {
 
     if (!isSolved()) {
@@ -359,7 +442,6 @@ function checkWin() {
     stopTimer();
 
     gameStarted = false;
-
 
     const score =
         calculateScore();
@@ -374,7 +456,6 @@ function checkWin() {
     finalScore.textContent =
         score;
 
-
     scoreElement.textContent =
         score;
 
@@ -384,23 +465,18 @@ function checkWin() {
 }
 
 
-// ========================================
-// SKOR
-// ========================================
+/* ========================================
+   SKOR
+======================================== */
 
 function calculateScore() {
 
     let score = 1000;
 
-    // Kurangi skor berdasarkan langkah
-
     score -= moves * 5;
-
-    // Kurangi skor berdasarkan waktu
 
     score -= Math.floor(seconds / 5);
 
-    // Skor minimal 100
 
     if (score < 100) {
 
@@ -413,9 +489,9 @@ function calculateScore() {
 }
 
 
-// ========================================
-// TIMER
-// ========================================
+/* ========================================
+   TIMER
+======================================== */
 
 function startGame() {
 
@@ -428,12 +504,15 @@ function startGame() {
     gameStarted = true;
 
     timerInterval =
-        setInterval(() => {
+        setInterval(function() {
 
             seconds++;
 
             timerElement.textContent =
                 formatTime(seconds);
+
+            scoreElement.textContent =
+                calculateScore();
 
         }, 1000);
 
@@ -442,9 +521,13 @@ function startGame() {
 
 function stopTimer() {
 
-    clearInterval(timerInterval);
+    if (timerInterval) {
 
-    timerInterval = null;
+        clearInterval(timerInterval);
+
+        timerInterval = null;
+
+    }
 
 }
 
@@ -454,22 +537,22 @@ function formatTime(totalSeconds) {
     const minutes =
         Math.floor(totalSeconds / 60);
 
-    const secondsLeft =
+    const remainingSeconds =
         totalSeconds % 60;
 
 
     return (
         String(minutes).padStart(2, "0") +
         ":" +
-        String(secondsLeft).padStart(2, "0")
+        String(remainingSeconds).padStart(2, "0")
     );
 
 }
 
 
-// ========================================
-// UPDATE INFO
-// ========================================
+/* ========================================
+   UPDATE INFORMASI
+======================================== */
 
 function updateInfo() {
 
@@ -485,42 +568,58 @@ function updateInfo() {
 }
 
 
-// ========================================
-// MULAI ULANG
-// ========================================
+/* ========================================
+   MULAI ULANG
+======================================== */
 
 function restartGame() {
 
-    stopTimer();
+    if (!selectedImage) {
 
-    moves = 0;
+        alert(
+            "Silakan pilih foto dari galeri terlebih dahulu."
+        );
 
-    seconds = 0;
+        return;
 
-    gameStarted = false;
+    }
 
-    selectedTile = null;
-
-    winMessage.classList.remove("show");
-
-    createPuzzle();
-
-    shufflePuzzle();
-
-    updateInfo();
+    createNewPuzzle();
 
 }
 
 
-// ========================================
-// EVENT BUTTON
-// ========================================
+/* ========================================
+   BUTTON
+======================================== */
 
 shuffleBtn.addEventListener(
     "click",
-    () => {
+    function() {
+
+        if (!selectedImage) {
+
+            alert(
+                "Silakan pilih foto dari galeri terlebih dahulu."
+            );
+
+            return;
+
+        }
+
+        stopTimer();
+
+        moves = 0;
+
+        seconds = 0;
+
+        gameStarted = false;
+
+        selectedTile = null;
 
         shufflePuzzle();
+
+        updateInfo();
 
     }
 );
@@ -528,30 +627,29 @@ shuffleBtn.addEventListener(
 
 restartBtn.addEventListener(
     "click",
-    () => {
-
-        restartGame();
-
-    }
+    restartGame
 );
 
 
 playAgainBtn.addEventListener(
     "click",
-    () => {
+    function() {
 
-        restartGame();
+        winMessage.classList.remove("show");
+
+        createNewPuzzle();
 
     }
 );
 
 
-// ========================================
-// START GAME
-// ========================================
+/* ========================================
+   KONDISI AWAL
+======================================== */
 
-createPuzzle();
-
-shufflePuzzle();
-
-updateInfo();
+puzzle.innerHTML = `
+    <div class="empty-puzzle">
+        📷<br>
+        Pilih foto dari galeri
+    </div>
+`;
