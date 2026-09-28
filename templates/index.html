@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Puzzle Susun Gambar</title>
+
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+
+<body>
+
+    <div class="container">
+
+        <h1>🧩 Puzzle Susun Gambar</h1>
+
+        <p class="subtitle">
+            Susun semua potongan gambar hingga menjadi gambar yang utuh!
+        </p>
+
+        <div class="game-info">
+
+            <div class="info-box">
+                <span>⏱️ Waktu</span>
+                <strong id="timer">00:00</strong>
+            </div>
+
+            <div class="info-box">
+                <span>👣 Langkah</span>
+                <strong id="moves">0</strong>
+            </div>
+
+            <div class="info-box">
+                <span>🏆 Skor</span>
+                <strong id="score">1000</strong>
+            </div>
+
+        </div>
+
+        <div id="puzzle" class="puzzle"></div>
+
+        <div class="buttons">
+            <button id="shuffleBtn">
+                🔀 Acak Puzzle
+            </button>
+
+            <button id="restartBtn">
+                🔄 Mulai Ulang
+            </button>
+        </div>
+
+        <div class="instructions">
+            <h3>📖 Cara Bermain</h3>
+            <p>
+                Klik dan tahan potongan gambar, kemudian geser ke posisi
+                yang diinginkan. Kamu juga bisa menggunakan drag & drop.
+            </p>
+        </div>
+
+        <div id="winMessage" class="win-message">
+            <div class="win-card">
+                <div class="trophy">🎉</div>
+
+                <h2>PUZZLE SELESAI!</h2>
+
+                <p>Selamat! Kamu berhasil menyusun gambar.</p>
+
+                <div class="result">
+                    <p>⏱️ Waktu: <strong id="finalTime">00:00</strong></p>
+                    <p>👣 Langkah: <strong id="finalMoves">0</strong></p>
+                    <p>🏆 Skor: <strong id="finalScore">0</strong></p>
+                </div>
+
+                <button id="playAgainBtn">
+                    🎮 Main Lagi
+                </button>
+            </div>
+        </div>
+
+    </div>
+
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+
+</body>
+</html>
